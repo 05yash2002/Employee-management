@@ -58,7 +58,7 @@ pipeline {
                 echo 'Deploying containers on EC2 host...'
                 withCredentials([
                     usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS'),
-                    string(credentialsId: 'mongo-uri', variable: 'MONGO_URI')
+                    string(credentialsId: 'mongo-uri', variable: 'ATLAS_URI')
                 ]) {
                     sh '''
                         set -e
@@ -72,7 +72,7 @@ pipeline {
                         docker run -d --name employee-server \
                           --network employee-net \
                           -p 5000:5000 \
-                          -e MONGO_URI="$MONGO_URI" \
+                          -e ATLAS_URI="$ATLAS_URI" \
                           --restart unless-stopped \
                           ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
 
