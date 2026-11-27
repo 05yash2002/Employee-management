@@ -52,6 +52,38 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying containers on EC2 host...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        set -e
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker network create employee-net || true
+
+                        docker pull ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
+                        docker pull ${DOCKER_USER}/employee-client:${BUILD_NUMBER}
+
+                        docker rm -f employee-server || true
+                        docker run -d --name employee-server \
+                          --network employee-net \
+                          -p 5000:5000 \
+                          --restart unless-stopped \
+                          ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
+
+                        docker rm -f employee-client || true
+                        docker run -d --name employee-client \
+                          --network employee-net \
+                          -p 80:80 \
+                          --restart unless-stopped \
+                          ${DOCKER_USER}/employee-client:${BUILD_NUMBER}
+
+                        docker ps
+                    '''
+                }
+            }
+        }
     }
 
     post {
