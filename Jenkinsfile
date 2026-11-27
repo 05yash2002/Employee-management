@@ -25,7 +25,11 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker Images...'
-                // Next step: add Dockerfiles & image build / push / Ansible deploy
+                sh '''
+                    set -e
+                    docker build -t employee-client:${BUILD_NUMBER} -t employee-client:latest ./client
+                    docker build -t employee-server:${BUILD_NUMBER} -t employee-server:latest ./server
+                '''
             }
         }
     }
