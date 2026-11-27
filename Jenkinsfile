@@ -56,7 +56,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying containers on EC2 host...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([
+                    usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS'),
+                    string(credentialsId: 'mongo-uri', variable: 'MONGO_URI')
+                ]) {
                     sh '''
                         set -e
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
@@ -69,13 +72,14 @@ pipeline {
                         docker run -d --name employee-server \
                           --network employee-net \
                           -p 5000:5000 \
+                          -e MONGO_URI="$MONGO_URI" \
                           --restart unless-stopped \
                           ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
 
                         docker rm -f employee-client || true
                         docker run -d --name employee-client \
                           --network employee-net \
-                          -p 80:80 \
+                          -p 8081:80 \
                           --restart unless-stopped \
                           ${DOCKER_USER}/employee-client:${BUILD_NUMBER}
 
