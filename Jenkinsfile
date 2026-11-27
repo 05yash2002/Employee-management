@@ -13,11 +13,11 @@ pipeline {
             steps {
                 echo 'Building MERN components...'
                 sh '''
-                    echo "Checking client directory..."
-                    cd client && npm install || true
-                    cd ..
-                    echo "Checking server directory..."
-                    cd server && npm install || true
+                    set -e
+                    echo "Installing & building client..."
+                    (cd client && npm install && npm run build)
+                    echo "Installing server dependencies..."
+                    (cd server && npm install)
                 '''
             }
         }
@@ -25,7 +25,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker Images...'
-                // You can add your docker build commands here once Dockerfiles are ready
+                // Next step: add Dockerfiles & image build / push / Ansible deploy
             }
         }
     }
