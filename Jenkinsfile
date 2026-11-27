@@ -32,5 +32,31 @@ pipeline {
                 '''
             }
         }
+
+        stage('Docker Push') {
+            steps {
+                echo 'Pushing Docker Images to Docker Hub...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        set -e
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker tag employee-client:${BUILD_NUMBER} ${DOCKER_USER}/employee-client:${BUILD_NUMBER}
+                        docker tag employee-client:${BUILD_NUMBER} ${DOCKER_USER}/employee-client:latest
+                        docker tag employee-server:${BUILD_NUMBER} ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
+                        docker tag employee-server:${BUILD_NUMBER} ${DOCKER_USER}/employee-server:latest
+                        docker push ${DOCKER_USER}/employee-client:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/employee-client:latest
+                        docker push ${DOCKER_USER}/employee-server:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/employee-server:latest
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
+        }
     }
 }
